@@ -32,10 +32,10 @@ def print_menu():
 {YELLOW}Available Commands:{NC}
   {GREEN}1{NC} - Test connectivity (pingall)
   {GREEN}2{NC} - Start iperf3 servers on server host
-  {GREEN}3{NC} - Generate URLLC traffic (port 5001)
-  {GREEN}4{NC} - Generate eMBB traffic (port 5002)
-  {GREEN}5{NC} - Generate mMTC traffic (port 5003)
-  {GREEN}6{NC} - Generate ALL slice traffic
+  {GREEN}3{NC} - Generate URLLC traffic from CSV (port 5001)
+  {GREEN}4{NC} - Generate eMBB traffic from Video (port 5002)
+  {GREEN}5{NC} - Generate mMTC traffic from CSV (port 5003)
+  {GREEN}6{NC} - Generate ALL slice traffic (from data files)
   {GREEN}7{NC} - Show switch flows
   {GREEN}8{NC} - Show network status
   {GREEN}9{NC} - Stop all traffic
@@ -96,29 +96,28 @@ def start_iperf_servers():
         print(f"{RED}✗ Failed to start iperf3 servers{NC}")
 
 def generate_traffic(slice_type):
-    """Generate traffic for a specific slice."""
-    config = {
-        "urllc": ("urllc_h1", 5001, "50M", "URLLC"),
-        "embb": ("embb_h1", 5002, "100M", "eMBB"),
-        "mmtc": ("mmtc_h1", 5003, "5M", "mMTC")
-    }
+    """Generate traffic for a specific slice using data files."""
+    print(f"{YELLOW}Generating {slice_type.upper()} traffic from data files...{NC}")
     
-    host, port, bw, name = config[slice_type]
-    print(f"{YELLOW}Generating {name} traffic: {bw} to port {port}...{NC}")
-    
-    cmd = f"sudo ip netns exec mn_{host} iperf3 -c 10.0.0.100 -p {port} -t 30 -b {bw} &"
+    # Use the traffic_generator.py script
+    cmd = f"python3 traffic_generator.py --slice {slice_type} --duration 30 &"
     subprocess.run(cmd, shell=True)
-    print(f"{GREEN}✓ {name} traffic started (30 seconds){NC}")
+    print(f"{GREEN}✓ {slice_type.upper()} traffic started (30 seconds){NC}")
 
 def generate_all_traffic():
-    """Generate traffic on all slices."""
-    print(f"{YELLOW}Starting all slice traffic...{NC}")
+    """Generate traffic on all slices using data files."""
+    print(f"{YELLOW}Starting all slice traffic from data files...{NC}")
+    print(f"  - URLLC: urllc_traffic.csv")
+    print(f"  - eMBB: Demo.mp4 (video streaming)")
+    print(f"  - mMTC: mmtc_traffic.csv")
+    
     start_iperf_servers()
     time.sleep(2)
-    generate_traffic("urllc")
-    generate_traffic("embb")
-    generate_traffic("mmtc")
-    print(f"{GREEN}✓ All traffic started{NC}")
+    
+    # Use the traffic_generator.py script
+    cmd = "python3 traffic_generator.py --slice all --duration 60 &"
+    subprocess.run(cmd, shell=True)
+    print(f"{GREEN}✓ All traffic started (60 seconds){NC}")
 
 def show_flows():
     """Show OpenFlow flows on switches."""
