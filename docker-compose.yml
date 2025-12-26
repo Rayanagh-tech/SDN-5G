@@ -1,0 +1,249 @@
+# ============================================================================
+# Docker Compose Configuration for 5G Network Slicing Lab
+# ============================================================================
+# Deploys the complete ELK stack for monitoring and visualization.
+#
+# Services:
+# - Elasticsearch: Data storage and search engine
+# - Logstash: Data ingestion and processing
+# - Kibana: Visualization and dashboards
+#
+# Usage:
+#   docker-compose up -d      # Start all services
+#   docker-compose down       # Stop all services
+#   docker-compose logs -f    # View logs
+#
+# ============================================================================
+
+version: '3.8'
+
+# ============================================================================
+# SERVICES
+# ============================================================================
+services:
+  # --------------------------------------------------------------------------
+  # Elasticsearch - Data Storage
+  # --------------------------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      # Single-node deployment (no cluster)
+      - discovery.type=single-node
+      # JVM heap size
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      # Disable security for local development
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      # Enable monitoring
+      - xpack.monitoring.collection.enabled=true
+      # Cluster name
+      - cluster.name=sdn-slicing-cluster
+      # Node name
+      - node.name=elasticsearch-01
+    ports:
+      - "9200:9200"   # HTTP API
+      - "9300:9300"   # Transport
+    volumes:
+      # Persistent data storage
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      sdn-network:
+        ipv4_address: 172.28.0.10
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    labels:
+      - "project=5g-network-slicing"
+      - "component=elasticsearch"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Logstash - Data Ingestion
+  # --------------------------------------------------------------------------
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: logstash
+    environment:
+      # JVM heap size
+      - LS_JAVA_OPTS=-Xms256m -Xmx256m
+      # Elasticsearch connection
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      # Monitoring
+      - XPACK_MONITORING_ENABLED=true
+      - XPACK_MONITORING_ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5044:5044"   # HTTP input for metrics
+      - "5045:5045"   # Beats input
+      - "9600:9600"   # Monitoring API
+    volumes:
+      # Pipeline configuration
+      - ./monitoring/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      # Metrics input directory
+      - ./monitoring/metrics:/app/metrics
+      # Logs output directory
+      - ./monitoring/logs:/app/logs
+    networks:
+      sdn-network:
+        ipv4_address: 172.28.0.11
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9600 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    labels:
+      - "project=5g-network-slicing"
+      - "component=logstash"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Kibana - Visualization
+  # --------------------------------------------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: kibana
+    environment:
+      # Elasticsearch connection
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      # Server configuration
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      # Disable security for local development
+      - XPACK_SECURITY_ENABLED=false
+      # Monitoring
+      - XPACK_MONITORING_UI_CONTAINER_ELASTICSEARCH_ENABLED=true
+    ports:
+      - "5601:5601"   # Web interface
+    networks:
+      sdn-network:
+        ipv4_address: 172.28.0.12
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'available' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    labels:
+      - "project=5g-network-slicing"
+      - "component=kibana"
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  # Index Setup - One-time initialization
+  # --------------------------------------------------------------------------
+  setup:
+    image: curlimages/curl:latest
+    container_name: elk-setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - sdn-network
+    volumes:
+      - ./monitoring/setup:/setup:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for Elasticsearch..."
+        sleep 10
+        
+        echo "Creating index template for SDN metrics..."
+        curl -X PUT "http://elasticsearch:9200/_index_template/sdn-metrics" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "index_patterns": ["sdn-*"],
+            "template": {
+              "settings": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0
+              },
+              "mappings": {
+                "properties": {
+                  "timestamp": { "type": "date" },
+                  "slice_name": { "type": "keyword" },
+                  "bandwidth_mbps": { "type": "float" },
+                  "latency_ms": { "type": "float" },
+                  "jitter_ms": { "type": "float" },
+                  "packet_loss_pct": { "type": "float" },
+                  "packets": { "type": "long" },
+                  "bytes": { "type": "long" },
+                  "packets_sent": { "type": "long" },
+                  "packets_received": { "type": "long" },
+                  "bytes_transferred": { "type": "long" },
+                  "sla_status": { "type": "keyword" },
+                  "sla_violation": { "type": "boolean" },
+                  "bandwidth_level": { "type": "keyword" },
+                  "latency_status": { "type": "keyword" },
+                  "network": { "type": "keyword" },
+                  "controller": { "type": "keyword" },
+                  "environment": { "type": "keyword" }
+                }
+              }
+            }
+          }' || true
+        
+        echo "Creating initial indices..."
+        curl -X PUT "http://elasticsearch:9200/sdn-flow-metrics-$(date +%Y.%m.%d)" \
+          -H "Content-Type: application/json" \
+          -d '{}' || true
+        
+        curl -X PUT "http://elasticsearch:9200/sdn-slice-metrics-$(date +%Y.%m.%d)" \
+          -H "Content-Type: application/json" \
+          -d '{}' || true
+        
+        echo "Setup complete!"
+    labels:
+      - "project=5g-network-slicing"
+      - "component=setup"
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+networks:
+  sdn-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
+    labels:
+      - "project=5g-network-slicing"
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  elasticsearch-data:
+    driver: local
+    labels:
+      - "project=5g-network-slicing"
+      - "component=elasticsearch"

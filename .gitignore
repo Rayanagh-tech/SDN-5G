@@ -1,0 +1,48 @@
+# 5G Network Slicing Project
+# Python and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and metrics (generated during experiments)
+monitoring/metrics/*.json
+monitoring/logs/*.log
+/tmp/iperf3_*.json
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform.lock.hcl
+terraform/crash.log
+
+# Docker volumes (managed by Docker)
+elasticsearch-data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Mininet
+*.dump
+*.pcap

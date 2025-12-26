@@ -1,0 +1,27 @@
+{
+    "slice_name": "eMBB",
+    "description": "Enhanced Mobile Broadband traffic profile. High throughput for bandwidth-intensive applications like video streaming and large file transfers.",
+    "port": 5002,
+    "bitrate": "50M",
+    "packet_size": 1400,
+    "duration": 60,
+    "interval": 1.0,
+    "parallel": 4,
+    "traffic_pattern": {
+        "type": "constant",
+        "notes": "Large packets for maximum throughput"
+    },
+    "sla_requirements": {
+        "max_latency_ms": 20,
+        "max_jitter_ms": 5,
+        "min_bandwidth_mbps": 50,
+        "max_packet_loss_pct": 1.0
+    },
+    "use_cases": [
+        "4K/8K video streaming",
+        "Virtual reality (VR)",
+        "Augmented reality (AR)",
+        "Cloud gaming",
+        "Large file downloads"
+    ]
+}
