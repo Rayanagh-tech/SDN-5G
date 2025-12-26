@@ -79,16 +79,27 @@ SDN-5G/
 ├── slice_manager.py     # SLA definitions & monitoring
 ├── orchestrator.py      # High-level experiment control
 ├── manual_test.py       # Interactive testing menu
+├── traffic_generator.py # Traffic generator from data files
 ├── start_all.sh         # ONE-CLICK START
 ├── stop_all.sh          # ONE-CLICK STOP
 ├── monitoring/
 │   └── simple_monitor.py  # Dashboard generator
-├── data-input/          # Traffic profiles (JSON)
-│   ├── latency.json     # URLLC profile
-│   ├── video.json       # eMBB profile
-│   └── mmtc.json        # mMTC profile
+├── data-input/          # Real traffic data files
+│   ├── urllc_traffic.csv  # URLLC low-latency traffic
+│   ├── Demo.mp4           # eMBB video streaming
+│   └── mmtc_traffic.csv   # mMTC IoT sensor traffic
 └── requirements.txt     # Python dependencies
 ```
+
+---
+
+## 📂 Data Files Used
+
+| File | Slice | Purpose |
+|------|-------|---------|
+| `urllc_traffic.csv` | URLLC | Low-latency critical traffic (107 records with device_id, throughput, latency, jitter) |
+| `Demo.mp4` | eMBB | Video streaming - high bandwidth traffic simulation |
+| `mmtc_traffic.csv` | mMTC | IoT sensor traffic (107 records with sensor data patterns) |
 
 ---
 
