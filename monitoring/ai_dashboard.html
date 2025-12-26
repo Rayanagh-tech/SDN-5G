@@ -103,19 +103,39 @@
                 traffic_volume: parseFloat(formData.get('traffic_volume'))
             };
 
-            const response = await fetch('http://192.168.142.128:5000/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
+            console.log('Sending data:', data);
 
-            const result = await response.json();
-            const resultDiv = document.getElementById('result');
-            resultDiv.style.display = 'block';
-            resultDiv.className = `result ${result.prediction}`;
-            resultDiv.innerText = `Prediction: ${result.prediction}`;
+            try {
+                const response = await fetch('http://192.168.142.128:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Received result:', result);
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.className = `result ${result.prediction}`;
+                resultDiv.innerText = `Prediction: ${result.prediction}`;
+            } catch (error) {
+                console.error('Error:', error);
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result';
+                resultDiv.style.backgroundColor = '#f8d7da';
+                resultDiv.style.color = '#721c24';
+                resultDiv.innerText = `Error: ${error.message}`;
+            }
         }
     </script>
 </body>

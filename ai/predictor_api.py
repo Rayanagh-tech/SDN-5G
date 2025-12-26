@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from ml_model import load_model, predict_traffic
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all domains
 
 # Load the trained model
 model = load_model()
