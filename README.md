@@ -82,8 +82,13 @@ SDN-5G/
 ├── traffic_generator.py # Traffic generator from data files
 ├── start_all.sh         # ONE-CLICK START
 ├── stop_all.sh          # ONE-CLICK STOP
+├── ai/                  # AI/ML Components
+│   ├── ml_model.py        # RandomForest traffic classifier
+│   ├── train_model.py     # Model training script
+│   └── predictor_api.py   # Flask REST API for predictions
 ├── monitoring/
-│   └── simple_monitor.py  # Dashboard generator
+│   ├── simple_monitor.py    # Dashboard generator
+│   └── ai_dashboard.html    # AI prediction interface
 ├── data-input/          # Real traffic data files
 │   ├── urllc_traffic.csv  # URLLC low-latency traffic
 │   ├── Demo.mp4           # eMBB video streaming
@@ -100,6 +105,78 @@ SDN-5G/
 | `urllc_traffic.csv` | URLLC | Low-latency critical traffic (107 records with device_id, throughput, latency, jitter) |
 | `Demo.mp4` | eMBB | Video streaming - high bandwidth traffic simulation |
 | `mmtc_traffic.csv` | mMTC | IoT sensor traffic (107 records with sensor data patterns) |
+
+---
+
+## 🤖 AI Integration - Traffic Prediction & Anomaly Detection
+
+This project integrates **Machine Learning** for intelligent network management and traffic prediction.
+
+### AI Components:
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **ML Model** | `ai/ml_model.py` | RandomForest classifier for traffic state prediction |
+| **Training** | `ai/train_model.py` | Model training with synthetic data |
+| **Prediction API** | `ai/predictor_api.py` | Flask REST API for real-time predictions |
+| **AI Dashboard** | `monitoring/ai_dashboard.html` | Interactive web interface for predictions |
+
+### AI Features:
+- ✅ **Traffic Classification** - Predicts: Normal, Critical, Secure
+- ✅ **Input Features** - Latency, Throughput, Packet Loss, Jitter, Traffic Volume  
+- ✅ **Real-time API** - Flask server on port 5000
+- ✅ **Interactive Dashboard** - Color-coded results
+- ✅ **ML Model** - RandomForest with 100 estimators
+
+### AI Workflow:
+```
+1. Collect Network Metrics (latency, throughput, packet_loss, jitter, volume)
+   ↓
+2. Send to Flask API (:5000/predict)
+   ↓
+3. ML Model processes features
+   ↓
+4. Returns prediction: NORMAL/CRITICAL/SECURE
+   ↓
+5. Dashboard displays color-coded result
+```
+
+### Using AI Predictions:
+
+#### 1. Start AI Components:
+```bash
+# Train the model (run once)
+python3 ai/train_model.py
+
+# Start Flask API
+python3 ai/predictor_api.py
+```
+
+#### 2. Test via API (Postman):
+```json
+POST http://192.168.142.128:5000/predict
+Content-Type: application/json
+
+{
+  "latency": 50,
+  "throughput": 500,
+  "packet_loss": 0.5,
+  "jitter": 10,
+  "traffic_volume": 1000
+}
+```
+
+#### 3. Use Web Dashboard:
+```
+http://192.168.142.128:8000/monitoring/ai_dashboard.html
+```
+
+### AI Model Performance:
+- **Algorithm**: RandomForest Classifier
+- **Features**: 5 network metrics
+- **Classes**: 3 traffic states (Normal, Critical, Secure)
+- **Training**: Synthetic data generation
+- **API**: Real-time predictions via REST
 
 ---
 
@@ -147,6 +224,16 @@ Role: Real-time visualization
 - Collects metrics per slice
 - Generates HTML dashboard
 - Shows bandwidth, latency, jitter, packet loss
+```
+
+### **6. AI Prediction System**
+```
+Role: Intelligent traffic analysis
+- ml_model.py: RandomForest classifier for traffic state
+- train_model.py: Synthetic data training
+- predictor_api.py: Flask REST API (:5000)
+- ai_dashboard.html: Interactive web interface
+- Predicts: Normal/Critical/Secure based on network metrics
 ```
 
 ---
