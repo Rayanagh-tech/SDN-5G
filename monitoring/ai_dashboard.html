@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Traffic Prediction Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        input, button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Traffic Prediction Dashboard</h1>
+        <form id="predictionForm">
+            <label for="latency">Latency (ms):</label>
+            <input type="number" id="latency" name="latency" required>
+
+            <label for="throughput">Throughput (Mbps):</label>
+            <input type="number" id="throughput" name="throughput" required>
+
+            <label for="packet_loss">Packet Loss (%):</label>
+            <input type="number" id="packet_loss" name="packet_loss" required>
+
+            <label for="jitter">Jitter (ms):</label>
+            <input type="number" id="jitter" name="jitter" required>
+
+            <label for="traffic_volume">Traffic Volume (MB):</label>
+            <input type="number" id="traffic_volume" name="traffic_volume" required>
+
+            <button type="button" onclick="predictTraffic()">Predict</button>
+        </form>
+
+        <div class="result" id="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function predictTraffic() {
+            const form = document.getElementById('predictionForm');
+            const formData = new FormData(form);
+
+            const data = {
+                latency: parseFloat(formData.get('latency')),
+                throughput: parseFloat(formData.get('throughput')),
+                packet_loss: parseFloat(formData.get('packet_loss')),
+                jitter: parseFloat(formData.get('jitter')),
+                traffic_volume: parseFloat(formData.get('traffic_volume'))
+            };
+
+            const response = await fetch('http://localhost:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('result').innerText = `Prediction: ${result.prediction}`;
+        }
+    </script>
+</body>
+</html>
