@@ -10,28 +10,30 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${YELLOW}[*] Stopping all services...${NC}"
+echo -e "${YELLOW}Stopping all 5G Network Slicing services...${NC}"
+echo ""
 
-# Stop Mininet
-echo -e "${YELLOW}[1/4] Stopping Mininet...${NC}"
+echo -e "${YELLOW}[1/5] Stopping Mininet...${NC}"
 sudo mn -c 2>/dev/null
 echo -e "${GREEN}[✓] Mininet stopped${NC}"
 
-# Stop Ryu Controller
-echo -e "${YELLOW}[2/4] Stopping Ryu Controller...${NC}"
-sudo pkill -f "ryu-manager" 2>/dev/null || true
+echo -e "${YELLOW}[2/5] Stopping Ryu Controller...${NC}"
+sudo pkill -9 -f "ryu-manager" 2>/dev/null || true
 echo -e "${GREEN}[✓] Controller stopped${NC}"
 
-# Stop Monitor
-echo -e "${YELLOW}[3/4] Stopping Monitor...${NC}"
-sudo pkill -f "simple_monitor" 2>/dev/null || true
+echo -e "${YELLOW}[3/5] Stopping Monitor...${NC}"
+sudo pkill -9 -f "simple_monitor" 2>/dev/null || true
 echo -e "${GREEN}[✓] Monitor stopped${NC}"
 
-# Stop iperf3
-echo -e "${YELLOW}[4/4] Stopping iperf3...${NC}"
-sudo pkill -f "iperf3" 2>/dev/null || true
+echo -e "${YELLOW}[4/5] Stopping iperf3...${NC}"
+sudo pkill -9 -f "iperf3" 2>/dev/null || true
 echo -e "${GREEN}[✓] iperf3 stopped${NC}"
 
+echo -e "${YELLOW}[5/5] Stopping Web Server...${NC}"
+sudo pkill -9 -f "http.server" 2>/dev/null || true
+echo -e "${GREEN}[✓] Web server stopped${NC}"
+
+echo ""
 echo -e "${GREEN}"
 echo "╔══════════════════════════════════════════════════════════════════════════════╗"
 echo "║                    ✅ ALL SERVICES STOPPED ✅                                ║"
